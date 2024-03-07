@@ -24,6 +24,21 @@ command_verbs = [
     "fale",
 ]
 
+ignore_tokens = [
+    "é",
+    "são",
+    "será",
+    "seriam",
+    "o",
+    "a",
+    "os",
+    "as",
+    "seu",
+    "sua",
+    "seus",
+    "suas",
+]
+
 # Load the Portuguese language model
 nlp = spacy.load("pt_core_news_sm")
 
@@ -56,28 +71,12 @@ def extract_subject(sentence, sentence_type):
     elif sentence_type == "Statement":
         return extract_subject_statement(sentence)
 
-
 def extract_subject_question(sentence):
     """Defines question words and words to ignore right after interrogatives."""
     doc = nlp(sentence)
 
     # Use a list to temporarily store tokens after encountering a question word
     interrogative_tokens = interrogative_words
-    
-    ignore_tokens = [
-        "é",
-        "são",
-        "será",
-        "seriam",
-        "o",
-        "a",
-        "os",
-        "as",
-        "seu",
-        "sua",
-        "seus",
-        "suas",
-    ]
 
     subject = ""
     found_interrogative = False
@@ -142,7 +141,6 @@ def extract_subject_statement(sentence):
         return ", ".join(nouns)
 
     return ""  # Return an empty string if no subject is identified
-
 
 def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
