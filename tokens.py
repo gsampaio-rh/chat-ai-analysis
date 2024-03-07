@@ -1,6 +1,29 @@
 import spacy
 import re
 
+# List of common interrogative words in Portuguese
+interrogative_words = [
+    "quem",
+    "qual",
+    "quais",
+    "quando",
+    "onde",
+    "como",
+    "por que",
+    "para que",
+]
+
+# List of imperative verbs indicating a command (example list, needs expansion)
+command_verbs = [
+    "faça",
+    "venha",
+    "use",
+    "leia",
+    "escreva",
+    "envie",
+    "fale",
+]
+
 # Load the Portuguese language model
 nlp = spacy.load("pt_core_news_sm")
 
@@ -39,15 +62,8 @@ def extract_subject_question(sentence):
     doc = nlp(sentence)
 
     # Use a list to temporarily store tokens after encountering a question word
-    interrogative_tokens = [
-        "quem",
-        "qual",
-        "quais",
-        "onde",
-        "como",
-        "por que",
-        "quando",
-    ]
+    interrogative_tokens = interrogative_words
+    
     ignore_tokens = [
         "é",
         "são",
@@ -132,29 +148,6 @@ def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
     text = sent.text.strip()
     cleaned_text = re.sub(r"\s+", " ", text).lower()
-
-    # List of common interrogative words in Portuguese
-    interrogative_words = [
-        "quem",
-        "qual",
-        "quais",
-        "quando",
-        "onde",
-        "como",
-        "por que",
-        "para que",
-    ]
-
-    # List of imperative verbs indicating a command (example list, needs expansion)
-    command_verbs = [
-        "faça",
-        "venha",
-        "use",
-        "leia",
-        "escreva",
-        "envie",
-        "fale",
-    ]
 
     # Check if the sentence ends with a question mark
     if cleaned_text.endswith("?"):
