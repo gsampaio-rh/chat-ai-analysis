@@ -39,10 +39,12 @@ def extract_subject(sentence, sentence_type):
     elif sentence_type == "Statement":
         return extract_subject_statement(sentence)
 
+
 def extract_subject_question(sentence):
-    """Extracts and returns the subject from a given sentence more accurately, considering dependency parsing."""
+    """Defines question words and words to ignore right after interrogatives."""
     doc = nlp(sentence)
 
+    # Use a list to temporarily store tokens after encountering a question word
     interrogative_tokens = [
         "quem",
         "qual",
@@ -52,28 +54,49 @@ def extract_subject_question(sentence):
         "por que",
         "quando",
     ]
+    ignore_tokens = [
+        "é",
+        "são",
+        "será",
+        "seriam",
+        "o",
+        "a",
+        "os",
+        "as",
+        "seu",
+        "sua",
+        "seus",
+        "suas",
+    ]
+
     subject = ""
     found_interrogative = False
 
+    # Use a list to temporarily store tokens after encountering a question word
+    temp_tokens = []
+
     for token in doc:
-        # Verifica se o token atual é uma palavra interrogativa
         if token.lower_ in interrogative_tokens:
             found_interrogative = True
-            continue
+            continue  # Jump to the next token after finding an interrogative
 
-        # Após encontrar uma palavra interrogativa, procura o próximo substantivo ou frase nominal
-        if found_interrogative and (token.pos_ in ["NOUN", "PROPN"]):
-            subject_candidates = [
-                chunk.text for chunk in doc.noun_chunks if token in chunk
-            ]
-            if subject_candidates:
-                subject = subject_candidates[
-                    0
-                ]  # Usa a primeira frase nominal encontrada como sujeito
+        if found_interrogative:
+            # If the current token should be ignored, continue without adding to the subject
+            if token.lower_ not in ignore_tokens and token.pos_ in [
+                "NOUN",
+                "PROPN",
+                "ADJ",
+            ]:
+                temp_tokens.append(token.text)
+            elif token.pos_ not in ["NOUN", "PROPN", "ADJ"] and temp_tokens:
+                # If we reach a token that is not a noun, propnoun or adjective, and we have already collected tokens, for the search
                 break
 
-    return subject
+    # Junta os tokens temporários para formar o sujeito
+    if temp_tokens:
+        subject = " ".join(temp_tokens)
 
+    return subject
 
 def extract_subject_statement(sentence):
     """Extracts and returns the most relevant subject from a given sentence."""
