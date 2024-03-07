@@ -29,7 +29,6 @@ def find_questions(txt):
 
     return questions
 
-
 def extract_subject(question):
     """Extracts and returns the subject from a given question more accurately."""
     # Process the question with spacy
