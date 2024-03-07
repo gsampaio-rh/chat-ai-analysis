@@ -27,8 +27,6 @@ def find_questions(txt):
         if potential_question.endswith("?"):
             questions.append(potential_question)
 
-        #TODO: Check for common question words for more comprehensive question detection
-
     return questions
 
 if __name__ == "__main__":
@@ -38,10 +36,13 @@ if __name__ == "__main__":
     questions = find_questions(txt)
     print(questions)
 
-    # Open File
-    # Conversation Information
+    # Open File ✅
+    
+    # Conversation Information 
     # Context/People information
-    # Extrair perguntas
+    
+    # Extrair perguntas ✅
+    # TODO: Check for common question words for more comprehensive question detection
     # Classificar as perguntas
     # Extrair as respostas
     # Classificar as respostas
