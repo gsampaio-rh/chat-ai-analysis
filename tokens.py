@@ -56,10 +56,16 @@ def find_question(sent):
 
     return question
 
-def extract_subject(question):
+def extract_sentence_from_line(line):
+    """Extracts the sentence from a line, removing any speaker prefix."""
+    # Remove possible speaker prefixes and return the sentence
+    sentence = re.sub(r"^(Entrevistador:|Pessoa:)\s*", "", line).strip()
+    return sentence
+
+def extract_subject(sentence):
     """Extracts and returns the subject from a given question more accurately."""
     # Process the question with spacy
-    doc = nlp(question)
+    doc = nlp(sentence.text)
 
     # Attempt to refine subject extraction by checking for interrogatives
     for token in doc:
@@ -92,25 +98,14 @@ def find_questions_and_answers(txt):
     questions_answers = []
     sentences = list(doc.sents)
     for sent in sentences:
-        subject = extract_subject(sent)
+        line = extract_sentence_from_line(sent.text)
         questions_answers.append(
             {
-                "sentence": sent,
+                "sentence": line,
                 "question": is_question(sent),
-                "answer": "",
-                "subject": "",
+                "subject": extract_subject(sent),
             }
         )
-        # question = find_question(sent)
-        # if question:
-        #     subject = extract_subject(question)
-        #     questions_answers.append(
-        #         {
-        #             "question": question,
-        #             "answer": '',
-        #             "subject": subject,
-        #         }
-        #     )
 
     return questions_answers
 
@@ -122,7 +117,7 @@ if __name__ == "__main__":
 
     for qa in questions_answers:
         print(
-            f"Sentence: '{qa['sentence']}'\nQuestion: '{qa['question']}'\nAnswer: '{qa['answer']}'\nSubject: '{qa['subject']}'\n"
+            f"Sentence: '{qa['sentence']}'\nSubject: '{qa['subject']}'\n"
         )
 
     # Open File ✅
