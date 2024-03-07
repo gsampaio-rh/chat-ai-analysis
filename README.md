@@ -24,6 +24,7 @@ pip install spacy
 ```
 
 3. Download and install the Portuguese language model:
+
 ```bash
 python -m spacy download pt_core_news_sm
 ```
