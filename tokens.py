@@ -10,6 +10,35 @@ def read_conversation_file(file_path):
         txt = file.read()
     return txt
 
+def is_question(sent):
+    """Determines if a given sentence is a question by checking for a question mark and common interrogative words."""
+    text = sent.text.strip()
+    cleaned_text = re.sub(r"\s+", " ", text).lower()
+
+    # List of common interrogative words in Portuguese
+    interrogative_words = [
+        "quem",
+        "qual",
+        "quais",
+        "quando",
+        "onde",
+        "como",
+        "por que",
+        "para que",
+    ]
+
+    # Check if the sentence ends with a question mark
+    if cleaned_text.endswith("?"):
+        return True
+    # Check if the sentence starts with an interrogative word
+    elif any(cleaned_text.startswith(word) for word in interrogative_words):
+        return True
+    # Check if the sentence contains an interrogative word followed by a comma, indicating a question
+    elif any(f"{word}," in cleaned_text for word in interrogative_words):
+        return True
+    # Additional custom rules can be added here
+
+    return False
 
 def find_question(sent):
     """Finds and returns questions in the given text, excluding non-question preambles."""
@@ -25,10 +54,7 @@ def find_question(sent):
     if potential_question.endswith("?"):
         question = potential_question
 
-    doc = nlp(txt)
-
     return question
-
 
 def extract_subject(question):
     """Extracts and returns the subject from a given question more accurately."""
@@ -60,50 +86,43 @@ def extract_subject(question):
 
     return ""
 
-def create_questions_subjects_dict(txt):
-    """Creates a dictionary mapping questions to their subjects."""
-
-    questions = find_questions(txt)
-
-    questions_subjects = {}
-    for question in questions:
-        subject = extract_subject(question)
-        questions_subjects[question] = subject
-    return questions_subjects
-
 def find_questions_and_answers(txt):
     """Finds and pairs questions with their immediate answers."""
     doc = nlp(txt)
     questions_answers = []
     sentences = list(doc.sents)
-    for i, sent in enumerate(sentences):
-        question = find_question(sent)
-        if question:
-            subject = extract_subject(question)
-            questions_answers.append(
-                {
-                    "question": question,
-                    "answer": '',
-                    "subject": subject,
-                }
-            )
-        
+    for sent in sentences:
+        subject = extract_subject(sent)
+        questions_answers.append(
+            {
+                "sentence": sent,
+                "question": is_question(sent),
+                "answer": "",
+                "subject": "",
+            }
+        )
+        # question = find_question(sent)
+        # if question:
+        #     subject = extract_subject(question)
+        #     questions_answers.append(
+        #         {
+        #             "question": question,
+        #             "answer": '',
+        #             "subject": subject,
+        #         }
+        #     )
+
     return questions_answers
 
 if __name__ == "__main__":
     file_path = "sample_chat.txt"
     txt = read_conversation_file(file_path)
 
-    # questions_subjects_dict = create_questions_subjects_dict(txt)
-
-    # for question, subject in questions_subjects_dict.items():
-    #     print(f"Question: '{question}'\nSubject: '{subject}'\n")
-
     questions_answers = find_questions_and_answers(txt)
 
     for qa in questions_answers:
         print(
-            f"Question: '{qa['question']}'\nAnswer: '{qa['answer']}'\nSubject: '{qa['subject']}'\n"
+            f"Sentence: '{qa['sentence']}'\nQuestion: '{qa['question']}'\nAnswer: '{qa['answer']}'\nSubject: '{qa['subject']}'\n"
         )
 
     # Open File ✅
