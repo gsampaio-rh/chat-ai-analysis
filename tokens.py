@@ -29,32 +29,87 @@ def extract_actor_and_sentence(line):
 
     return actor, sentence
 
-def extract_subject(sentence):
+
+def extract_subject(sentence, sentence_type):
+    """Extracts and returns the most relevant subject from a given sentence, considering if it's a question or a statement."""
+
+    # For questions, focus on interrogative words and their related noun phrases
+    if sentence_type == "Question":
+        return extract_subject_question(sentence)
+    elif sentence_type == "Statement":
+        return extract_subject_statement(sentence)
+
+def extract_subject_question(sentence):
     """Extracts and returns the subject from a given sentence more accurately, considering dependency parsing."""
     doc = nlp(sentence)
 
-    # Attempt to find the syntactic subject (nsubj) of the sentence
-    subjects = [token.text for token in doc if token.dep_ in ["nsubj", "nsubjpass"]]
+    interrogative_tokens = [
+        "quem",
+        "qual",
+        "quais",
+        "onde",
+        "como",
+        "por que",
+        "quando",
+    ]
+    subject = ""
+    found_interrogative = False
 
-    # If no clear subject is found, look for nominal subjects or compound nouns that might act as subjects
-    if not subjects:
-        compounds_and_nouns = [
-            token.text
-            for token in doc
-            if token.dep_ == "compound" or token.pos_ == "NOUN"
-        ]
-        if compounds_and_nouns:
-            subjects = compounds_and_nouns
+    for token in doc:
+        # Verifica se o token atual é uma palavra interrogativa
+        if token.lower_ in interrogative_tokens:
+            found_interrogative = True
+            continue
 
-    # Combine subjects or return the most relevant noun as the subject
-    subject = " ".join(subjects) if subjects else ""
-
-    # Consider extracting keywords or noun phrases if no subjects are identified by the above method
-    if not subject:
-        noun_phrases = [chunk.text for chunk in doc.noun_chunks]
-        subject = noun_phrases[0] if noun_phrases else ""
+        # Após encontrar uma palavra interrogativa, procura o próximo substantivo ou frase nominal
+        if found_interrogative and (token.pos_ in ["NOUN", "PROPN"]):
+            subject_candidates = [
+                chunk.text for chunk in doc.noun_chunks if token in chunk
+            ]
+            if subject_candidates:
+                subject = subject_candidates[
+                    0
+                ]  # Usa a primeira frase nominal encontrada como sujeito
+                break
 
     return subject
+
+
+def extract_subject_statement(sentence):
+    """Extracts and returns the most relevant subject from a given sentence."""
+    doc = nlp(sentence)
+
+    # Attempt to use named entities first as they can be more specific
+    named_entities = [
+        ent.text
+        for ent in doc.ents
+        if ent.label_ in ["PERSON", "NORP", "ORG", "GPE", "LOC"]
+    ]
+    if named_entities:
+        return ", ".join(
+            named_entities
+        )  # Return named entities as a comma-separated string if available
+
+    # If no suitable named entities, look for noun chunks that aren't pronouns
+    noun_phrases = [
+        chunk.text for chunk in doc.noun_chunks if chunk.root.pos_ != "PRON"
+    ]
+    if noun_phrases:
+        return ", ".join(
+            noun_phrases
+        )  # Return noun phrases as a comma-separated string
+
+    # As a fallback, identify standalone nouns or proper nouns directly
+    nouns = [
+        token.text
+        for token in doc
+        if token.pos_ in ["NOUN", "PROPN"] and token.dep_ not in ["attr", "dobj"]
+    ]
+    if nouns:
+        return ", ".join(nouns)
+
+    return ""  # Return an empty string if no subject is identified
+
 
 def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
@@ -109,9 +164,9 @@ def find_questions_and_answers(txt):
             continue
 
         sentence_doc = nlp(sentence)
-        
+
         sentence_type = classify_sentence(sentence_doc)
-        subject = extract_subject(sentence_doc)
+        subject = extract_subject(sentence_doc, sentence_type)
 
         questions_answers.append(
             {
