@@ -29,35 +29,34 @@ def extract_actor_and_sentence(line):
 
     return actor, sentence
 
+
 def extract_subject(sentence):
-    """Extracts and returns the subject from a given question more accurately."""
-    # Process the question with spacy
-    doc = nlp(sentence.text)
+    """Extracts and returns the subject from a given sentence more accurately, considering dependency parsing."""
+    doc = nlp(sentence)
 
-    # Attempt to refine subject extraction by checking for interrogatives
-    for token in doc:
-        # If the token is an interrogative pronoun or determiner, get the next noun
-        if token.dep_ == "ROOT" and token.pos_ == "VERB":
-            for child in token.children:
-                if (
-                    child.dep_ in ["nsubj", "nsubjpass", "dobj", "attr", "pobj"]
-                    and child.pos_ == "NOUN"
-                ):
-                    return child.text
-        elif token.tag_ in ["WP", "WDT"]:
-            for child in token.head.children:
-                if (
-                    child.dep_ in ["nsubj", "nsubjpass", "dobj", "attr", "pobj"]
-                    and child.pos_ == "NOUN"
-                ):
-                    return child.text
+    # Attempt to find the syntactic subject (nsubj) of the sentence
+    subjects = [token.text for token in doc if token.dep_ in ["nsubj", "nsubjpass"]]
 
-    # Fallback to the first noun in the sentence if no clear subject is found
-    for token in doc:
-        if token.pos_ == "NOUN":
-            return token.text
+    # If no clear subject is found, look for nominal subjects or compound nouns that might act as subjects
+    if not subjects:
+        compounds_and_nouns = [
+            token.text
+            for token in doc
+            if token.dep_ == "compound" or token.pos_ == "NOUN"
+        ]
+        if compounds_and_nouns:
+            subjects = compounds_and_nouns
 
-    return ""
+    # Combine subjects or return the most relevant noun as the subject
+    subject = " ".join(subjects) if subjects else ""
+
+    # Consider extracting keywords or noun phrases if no subjects are identified by the above method
+    if not subject:
+        noun_phrases = [chunk.text for chunk in doc.noun_chunks]
+        subject = noun_phrases[0] if noun_phrases else ""
+
+    return subject
+
 
 def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
