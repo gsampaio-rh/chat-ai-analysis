@@ -10,24 +10,25 @@ def read_conversation_file(file_path):
         txt = file.read()
     return txt
 
-def find_questions(txt):
+
+def find_question(sent):
     """Finds and returns questions in the given text, excluding non-question preambles."""
     # Process the text with spacy
+    question = ''
+    text = sent.text.strip()
+    # Clean the sentence of newline characters and extra spaces
+    cleaned_text = re.sub(r"\s+", " ", text)
+    # Split at colon if it exists, focusing on text after the last colon which might be a direct question
+    parts = cleaned_text.rsplit(":", 1)
+    potential_question = parts[-1].strip() if len(parts) > 1 else parts[0]
+    # Add to questions if it ends with a question mark
+    if potential_question.endswith("?"):
+        question = potential_question
+
     doc = nlp(txt)
 
-    questions = []
-    for sent in doc.sents:
-        text = sent.text.strip()
-        # Clean the sentence of newline characters and extra spaces
-        cleaned_text = re.sub(r"\s+", " ", text)
-        # Split at colon if it exists, focusing on text after the last colon which might be a direct question
-        parts = cleaned_text.rsplit(":", 1)
-        potential_question = parts[-1].strip() if len(parts) > 1 else parts[0]
-        # Add to questions if it ends with a question mark
-        if potential_question.endswith("?"):
-            questions.append(potential_question)
+    return question
 
-    return questions
 
 def extract_subject(question):
     """Extracts and returns the subject from a given question more accurately."""
@@ -70,14 +71,40 @@ def create_questions_subjects_dict(txt):
         questions_subjects[question] = subject
     return questions_subjects
 
+def find_questions_and_answers(txt):
+    """Finds and pairs questions with their immediate answers."""
+    doc = nlp(txt)
+    questions_answers = []
+    sentences = list(doc.sents)
+    for i, sent in enumerate(sentences):
+        question = find_question(sent)
+        if question:
+            subject = extract_subject(question)
+            questions_answers.append(
+                {
+                    "question": question,
+                    "answer": '',
+                    "subject": subject,
+                }
+            )
+        
+    return questions_answers
+
 if __name__ == "__main__":
     file_path = "sample_chat.txt"
     txt = read_conversation_file(file_path)
 
-    questions_subjects_dict = create_questions_subjects_dict(txt)
+    # questions_subjects_dict = create_questions_subjects_dict(txt)
 
-    for question, subject in questions_subjects_dict.items():
-        print(f"Question: '{question}'\nSubject: '{subject}'\n")
+    # for question, subject in questions_subjects_dict.items():
+    #     print(f"Question: '{question}'\nSubject: '{subject}'\n")
+
+    questions_answers = find_questions_and_answers(txt)
+
+    for qa in questions_answers:
+        print(
+            f"Question: '{qa['question']}'\nAnswer: '{qa['answer']}'\nSubject: '{qa['subject']}'\n"
+        )
 
     # Open File ✅
 
