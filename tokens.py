@@ -24,18 +24,18 @@ def find_questions(txt):
   return questions
 
 if __name__ == '__main__':
-    file_path = 'sample_chat.txt'
-    txt = read_conversation_file(file_path)
-    
-    questions = find_questions(txt)
-    print(questions)
+  file_path = 'sample_chat.txt'
+  txt = read_conversation_file(file_path)
+  
+  questions = find_questions(txt)
+  print(questions)
 
 
-    # Open File
-    # Conversation Information
-    # Context/People information
-    # Extrair perguntas
-    # Classificar as perguntas
-    # Extrair as respostas
-    # Classificar as respostas
-    # print(info)
+  # Open File
+  # Conversation Information
+  # Context/People information
+  # Extrair perguntas
+  # Classificar as perguntas
+  # Extrair as respostas
+  # Classificar as respostas
+  # print(info)
