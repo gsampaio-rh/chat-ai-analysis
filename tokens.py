@@ -10,12 +10,6 @@ def read_conversation_file(file_path):
         txt = file.read()
     return txt
 
-def extract_sentence_from_line(line):
-    """Extracts the sentence from a line, removing any speaker prefix."""
-    # Remove possible speaker prefixes and return the sentence
-    sentence = re.sub(r"^(Entrevistador:|Pessoa:)\s*", "", line).strip()
-    return sentence
-
 def extract_actor_and_sentence(line):
     """Extracts the actor and the sentence from a line, identifying speaker prefixes."""
     # Identify speaker prefixes and extract the sentence
