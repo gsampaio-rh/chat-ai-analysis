@@ -29,7 +29,6 @@ def extract_actor_and_sentence(line):
 
     return actor, sentence
 
-
 def extract_subject(sentence):
     """Extracts and returns the subject from a given sentence more accurately, considering dependency parsing."""
     doc = nlp(sentence)
@@ -56,7 +55,6 @@ def extract_subject(sentence):
         subject = noun_phrases[0] if noun_phrases else ""
 
     return subject
-
 
 def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
