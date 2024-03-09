@@ -165,7 +165,7 @@ def extract_subject_and_object(sentence):
 
     # Enhanced iteration through token dependencies for subject and object
     for token in doc:
-        if "subj" in token.dep_:
+        if "subj" in token.dep_ and token.pos_ in ["NOUN"]:
             subject_tokens = [
                 token.text
                 for token in token.subtree
@@ -186,6 +186,14 @@ def extract_subject_and_object(sentence):
                     subject = ent.text
                 elif not object_:
                     object_ = ent.text
+
+    # New logic to handle when no object has been found
+    if not object_:
+        root = [token for token in doc if token.dep_ == "ROOT"][
+            0
+        ]  # Assuming there's always one root
+        object_tokens = [token.text for token in root.subtree if not token.is_stop]
+        object_ = root
 
     return subject, object_
 
