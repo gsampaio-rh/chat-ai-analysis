@@ -97,8 +97,8 @@ EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2" # Uses 0.2 GB of VRAM (Less accurate b
 # MODEL_ID = "TheBloke/Llama-2-13b-Chat-GGUF"
 # MODEL_BASENAME = "llama-2-13b-chat.Q4_K_M.gguf"
 
-MODEL_ID = "TheBloke/Llama-2-7b-Chat-GGUF"
-MODEL_BASENAME = "llama-2-7b-chat.Q4_K_M.gguf"
+# MODEL_ID = "TheBloke/Llama-2-7b-Chat-GGUF"
+# MODEL_BASENAME = "llama-2-7b-chat.Q4_K_M.gguf"
 
 # MODEL_ID = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
 # MODEL_BASENAME = "mistral-7b-instruct-v0.1.Q8_0.gguf"
@@ -110,8 +110,8 @@ MODEL_BASENAME = "llama-2-7b-chat.Q4_K_M.gguf"
 #### (FOR HF MODELS)
 ####
 
-# MODEL_BASENAME = None
-# MODEL_ID = "tiiuae/falcon-7b-instruct"
+MODEL_BASENAME = None
+MODEL_ID = "tiiuae/falcon-7b-instruct"
 # MODEL_ID = "NousResearch/Llama-2-7b-chat-hf"
 # MODEL_BASENAME = None
 # MODEL_ID = "TheBloke/vicuna-7B-1.1-HF"
