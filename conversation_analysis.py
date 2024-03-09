@@ -1,5 +1,6 @@
 import re
 import spacy
+from spacy.matcher import Matcher
 from transformers import pipeline
 import pandas as pd
 import streamlit as st
@@ -16,6 +17,12 @@ roberta_sentiment_classifier = pipeline(
 
 # Load the Portuguese language model
 nlp = spacy.load("pt_core_news_sm")
+
+# Initialize Matcher with the current NLP vocab
+matcher = Matcher(nlp.vocab)
+
+# Define pattern for emails and a general pattern for phone numbers
+matcher.add("EMAIL", [[{"LIKE_EMAIL": True}]])
 
 # List of common interrogative words in Portuguese
 interrogative_words = [
@@ -74,6 +81,15 @@ def extract_actor_and_sentence(line):
 
     return actor, sentence
 
+
+def find_phone_numbers(text):
+    # Define a regex pattern for phone numbers
+    # This pattern aims to match phone numbers in the formats you described
+    phone_pattern = r"\(?\d{2}\)?[-\s]?\d{4,5}[-\s]?\d{4}"
+    matches = re.findall(phone_pattern, text)
+    return matches
+
+
 def sentiment_analysis(sentence):
     # DistilBERT analysis
     distilbert_scores = distilled_student_sentiment_classifier(sentence)[0]
@@ -89,15 +105,6 @@ def sentiment_analysis(sentence):
     roberta_dominant_sentiment = roberta_scores["label"]
 
     return distilbert_dominant_sentiment, roberta_dominant_sentiment
-
-def extract_subject(sentence, sentence_type):
-    """Extracts and returns the most relevant subject from a given sentence, considering if it's a question or a statement."""
-
-    # For questions, focus on interrogative words and their related noun phrases
-    if sentence_type == "Question":
-        return extract_subject_question(sentence)
-    elif sentence_type == "Statement":
-        return extract_subject_statement(sentence)
 
 def extract_subject_question(sentence):
     """Defines question words and words to ignore right after interrogatives."""
@@ -135,42 +142,47 @@ def extract_subject_question(sentence):
 
     return subject
 
-def extract_subject_statement(sentence):
-    """Extracts and returns the most relevant subject from a given sentence, excluding stop words."""
+def extract_subject_and_object(sentence):
+    """Extracts and returns the most relevant subject and object from a given sentence, excluding stop words, with enhancements for specific patterns."""
     doc = nlp(sentence)
+    subject = ""
+    object_ = ""
 
-    # Use named entities first as they can be more specific
-    named_entities = [
-        ent.text
-        for ent in doc.ents
-        if ent.label_ in ["PERSON", "NORP", "ORG", "GPE", "LOC"]
-    ]
-    if named_entities:
-        # Return named entities as a comma-separated string if available
-        return ", ".join(named_entities)
+    # First, attempt to find phone numbers in the sentence
+    phone_numbers = find_phone_numbers(sentence)
+    if phone_numbers:
+        object_ = ", ".join(phone_numbers)  # Join all found phone numbers as the object
 
-    # Look for noun chunks that aren't pronouns and don't consist solely of stop words
-    noun_phrases = [
-        chunk.text
-        for chunk in doc.noun_chunks
-        if chunk.root.pos_ != "PRON" and not all(token.is_stop for token in chunk)
-    ]
-    if noun_phrases:
-        # Return noun phrases as a comma-separated string
-        return ", ".join(noun_phrases)
+    # Apply matcher to the doc
+    matches = matcher(doc)
+    for match_id, start, end in matches:
+        span = doc[start:end]
+        if match_id == nlp.vocab.strings["EMAIL"] and not object_:
+            object_ = span.text
 
-    # As a fallback, identify standalone nouns or proper nouns, excluding stop words
-    nouns = [
-        token.text
-        for token in doc
-        if token.pos_ in ["NOUN", "PROPN"]
-        and not token.dep_ in ["attr", "dobj"]
-        and not token.is_stop
-    ]
-    if nouns:
-        return ", ".join(nouns)
+    # Enhanced iteration through token dependencies for subject and object
+    for token in doc:
+        if "subj" in token.dep_:
+            subject_tokens = [
+                token.text for token in token.subtree if not token.is_stop
+            ]
+            subject = " ".join(subject_tokens)
+        elif "obj" in token.dep_:
+            object_tokens = [token.text for token in token.subtree if not token.is_stop]
+            object_ = (
+                " ".join(object_tokens) if not object_ else object_
+            )  # Do not override if already set by pattern matcher
 
-    return ""  # Return an empty string if no subject is identified
+    # Integration of named entities for subjects and objects not captured by dependency parsing
+    if not subject or not object_:
+        for ent in doc.ents:
+            if ent.label_ in ["PERSON", "NORP", "ORG", "GPE", "LOC"]:
+                if not subject:
+                    subject = ent.text
+                elif not object_:
+                    object_ = ent.text
+
+    return subject, object_
 
 def classify_sentence(sent):
     """Classifies a given sentence into categories such as Question, Statement, Command, etc."""
@@ -204,7 +216,14 @@ def find_questions_and_answers(txt):
         sentence_doc = nlp(sentence)
 
         sentence_type = classify_sentence(sentence_doc)
-        subject = extract_subject(sentence_doc, sentence_type)
+        
+        # For questions, focus on interrogative words and their related noun phrases
+        subject = ''
+        object_ = ''
+        if sentence_type == "Question":
+            subject = extract_subject_question(sentence)
+        elif sentence_type == "Statement":
+            subject, object_ = extract_subject_and_object(sentence)
 
         # sentiment = sentiment_analysis(sentence)
         distilbert_result, roberta_result = sentiment_analysis(sentence)
@@ -215,6 +234,7 @@ def find_questions_and_answers(txt):
                 "actor": actor,
                 "type": sentence_type,
                 "subject": subject,
+                "object_": object_,
                 "sentiment_roberta_result": roberta_result,
                 "sentiment_distilbert_result": distilbert_result,
             }
@@ -253,7 +273,6 @@ def main():
     else:
         st.dataframe(questions_answers_df)
 
-
 if __name__ == "__main__":
 
     file_path = "sample_chat.txt"
@@ -271,6 +290,10 @@ if __name__ == "__main__":
 
     # Exemplo de visualização dos primeiros registros
     print(questions_answers_df)
+
+    questions_answers_df.to_csv(
+        "processed_chat_data.csv", index=False
+    )
 
     # main()
 
