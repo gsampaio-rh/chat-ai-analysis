@@ -1,5 +1,12 @@
-import spacy
 import re
+import spacy
+from transformers import pipeline
+
+distilled_student_sentiment_classifier = pipeline(
+    model="lxyuan/distilbert-base-multilingual-cased-sentiments-student",
+    return_all_scores=True,
+)
+
 
 # List of common interrogative words in Portuguese
 interrogative_words = [
@@ -61,6 +68,19 @@ def extract_actor_and_sentence(line):
 
     return actor, sentence
 
+def sentiment_analysis(sentence):
+    sentiment_scores = distilled_student_sentiment_classifier(sentence)
+
+    # Assumes sentiment_scores is a list of dictionaries like the one provided
+    scores = sentiment_scores[0]  # Unpack the external list
+
+    # Initializes a dictionary to map each sentiment to its score
+    sentiment_map = {item["label"]: item["score"] for item in scores}
+
+    # Find the sentiment with the highest score
+    dominant_sentiment = max(sentiment_map, key=sentiment_map.get)
+
+    return dominant_sentiment
 
 def extract_subject(sentence, sentence_type):
     """Extracts and returns the most relevant subject from a given sentence, considering if it's a question or a statement."""
@@ -101,7 +121,7 @@ def extract_subject_question(sentence):
                 # If we reach a token that is not a noun, propnoun or adjective, and we have already collected tokens, for the search
                 break
 
-    # Junta os tokens temporários para formar o sujeito
+    # Join the temporary tokens to form the subject
     if temp_tokens:
         subject = " ".join(temp_tokens)
 
@@ -176,12 +196,15 @@ def find_questions_and_answers(txt):
         sentence_type = classify_sentence(sentence_doc)
         subject = extract_subject(sentence_doc, sentence_type)
 
+        sentiment = sentiment_analysis(sentence)
+
         questions_answers.append(
             {
                 "sentence": sentence,
                 "actor": actor,
                 "type": sentence_type,
                 "subject": subject,
+                "sentiment": sentiment,
             }
         )
 
@@ -195,7 +218,7 @@ if __name__ == "__main__":
 
     for qa in questions_answers:
         print(
-            f"Sentence: '{qa['sentence']}'\nActor: '{qa['actor']}'\nType: '{qa['type']}'\nSubject: '{qa['subject']}'\n"
+            f"Sentence: '{qa['sentence']}'\nActor: '{qa['actor']}'\nType: '{qa['type']}'\nSubject: '{qa['subject']}'\nSentiment: '{qa['sentiment']}'\n"
         )
 
     # Open File ✅
@@ -210,3 +233,4 @@ if __name__ == "__main__":
     # Classificar as respostas
     # Desvio
     # print(info)
+    # Normalizar
