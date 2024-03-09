@@ -148,6 +148,9 @@ def extract_subject_and_object(sentence):
     subject = ""
     object_ = ""
 
+    # List of exceptions that should not be considered stop words in this context
+    stop_word_exceptions = ["local", "serviço"]
+
     # First, attempt to find phone numbers in the sentence
     phone_numbers = find_phone_numbers(sentence)
     if phone_numbers:
@@ -164,7 +167,9 @@ def extract_subject_and_object(sentence):
     for token in doc:
         if "subj" in token.dep_:
             subject_tokens = [
-                token.text for token in token.subtree if not token.is_stop
+                token.text
+                for token in token.subtree
+                if not token.is_stop or token.text.lower() in stop_word_exceptions
             ]
             subject = " ".join(subject_tokens)
         elif "obj" in token.dep_:
