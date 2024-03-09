@@ -106,37 +106,32 @@ def sentiment_analysis(sentence):
 
     return distilbert_dominant_sentiment, roberta_dominant_sentiment
 
+
 def extract_subject_question(sentence):
-    """Defines question words and words to ignore right after interrogatives."""
+    """Extracts the subject from a question sentence, focusing on tokens following interrogative words."""
     doc = nlp(sentence)
-
-    # Use a list to temporarily store tokens after encountering a question word
-    interrogative_tokens = interrogative_words
-
     subject = ""
     found_interrogative = False
-
-    # Use a list to temporarily store tokens after encountering a question word
     temp_tokens = []
 
     for token in doc:
-        if token.lower_ in interrogative_tokens:
+        # Check for interrogative words using the correct attribute
+        if token.text.lower() in interrogative_words:
             found_interrogative = True
-            continue  # Jump to the next token after finding an interrogative
+            continue  # Skip the interrogative word itself
 
         if found_interrogative:
-            # If the current token should be ignored, continue without adding to the subject
-            if token.lower_ not in ignore_tokens and token.pos_ in [
+            # Check if the token should be ignored based on the ignore list and POS
+            if token.text.lower() not in ignore_tokens and token.pos_ in [
                 "NOUN",
                 "PROPN",
                 "ADJ",
             ]:
                 temp_tokens.append(token.text)
             elif token.pos_ not in ["NOUN", "PROPN", "ADJ"] and temp_tokens:
-                # If we reach a token that is not a noun, propnoun or adjective, and we have already collected tokens, for the search
-                break
+                break  # End subject extraction if a non-relevant POS is encountered
 
-    # Join the temporary tokens to form the subject
+    # Form the subject from collected tokens
     if temp_tokens:
         subject = " ".join(temp_tokens)
 
