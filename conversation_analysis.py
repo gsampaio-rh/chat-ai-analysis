@@ -137,6 +137,15 @@ def extract_subject_question(sentence):
 
     return subject
 
+# Filter punctuation from token text
+def filter_punct(tokens):
+    return [
+        token
+        for token in tokens
+        if token.pos_ != "PUNCT" and token.text not in ["=", "-"]
+    ]
+
+
 def extract_subject_and_object(sentence):
     """Extracts and returns the most relevant subject and object from a given sentence, excluding stop words, with enhancements for specific patterns."""
     doc = nlp(sentence)
@@ -174,21 +183,21 @@ def extract_subject_and_object(sentence):
             )  # Do not override if already set by pattern matcher
 
     # Integration of named entities for subjects and objects not captured by dependency parsing
-    if not subject or not object_:
+    if not subject:
         for ent in doc.ents:
             if ent.label_ in ["PERSON", "NORP", "ORG", "GPE", "LOC"]:
                 if not subject:
                     subject = ent.text
-                elif not object_:
-                    object_ = ent.text
 
-    # New logic to handle when no object has been found
+    # Fallback to NER and ROOT token if no object found
     if not object_:
-        root = [token for token in doc if token.dep_ == "ROOT"][
-            0
-        ]  # Assuming there's always one root
-        object_tokens = [token.text for token in root.subtree if not token.is_stop]
-        object_ = root
+        for ent in doc.ents:
+            if not object_ and ent.label_ in ["ORG", "PERSON", "GPE", "LOC"]:
+                object_ = ent.text
+        if not object_:  # If still no object, use ROOT subtree
+            root = [token for token in doc if token.dep_ == "ROOT"][0]
+            object_tokens = filter_punct([t for t in root.subtree])
+            object_ = " ".join(token.text for token in object_tokens)
 
     return subject, object_
 

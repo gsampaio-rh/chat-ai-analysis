@@ -1,8 +1,8 @@
 sentence,actor,type,subject,object_,sentiment_roberta_result,sentiment_distilbert_result
-WhatsApp Chat,Unknown,Statement,,WhatsApp,neutral,positive
-==============,Unknown,Statement,,=,neutral,positive
+WhatsApp Chat,Unknown,Statement,,WhatsApp Chat,neutral,positive
+==============,Unknown,Statement,,,neutral,positive
 "Olá, como posso ajudá-lo hoje? Vamos começar com algumas perguntas básicas. Qual é o seu nome?",Entrevistador,Question,perguntas básicas,,neutral,negative
-Meu nome é Ana Silva.,Pessoa,Statement,nome,Ana,neutral,positive
+Meu nome é Ana Silva.,Pessoa,Statement,nome,Meu nome é Ana Silva,neutral,positive
 "Ótimo, Ana Silva! Qual é o seu email?",Entrevistador,Question,email,,neutral,positive
 Meu email é ana.silva@email.com.,Pessoa,Statement,email,ana.silva@email.com,neutral,positive
 Perfeito! E qual é o número do seu telefone celular?,Entrevistador,Question,número,,neutral,positive
@@ -12,7 +12,7 @@ O órgão relacionado é o Departamento de Trânsito.,Pessoa,Statement,órgão r
 Entendido. E qual é o local relacionado à sua manifestação?,Entrevistador,Question,local,,neutral,negative
 "O local é a Avenida Paulista, número 1000, São Paulo.",Pessoa,Statement,local,Avenida Paulista,neutral,positive
 Certo. Qual é o serviço para o qual deve ser lançada a manifestação?,Entrevistador,Question,serviço,,neutral,negative
-O serviço é a manutenção de semáforos.,Pessoa,Statement,serviço,manutenção,neutral,positive
+O serviço é a manutenção de semáforos.,Pessoa,Statement,serviço,O serviço é a manutenção de semáforos,neutral,positive
 Ótimo. Sobre o que você gostaria de falar?,Entrevistador,Question,,,neutral,negative
 Eu gostaria de falar sobre a demora na manutenção dos semáforos que está causando muitos congestionamentos.,Pessoa,Statement,,demora manutenção semáforos causando congestionamentos,negative,negative
 Entendi. Quem são os envolvidos na sua manifestação?,Entrevistador,Question,envolvidos,,neutral,negative
