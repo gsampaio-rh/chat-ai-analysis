@@ -1,6 +1,7 @@
 import re
 import spacy
 from transformers import pipeline
+import pandas as pd
 
 distilled_student_sentiment_classifier = pipeline(
     model="lxyuan/distilbert-base-multilingual-cased-sentiments-student",
@@ -216,21 +217,29 @@ if __name__ == "__main__":
 
     questions_answers = find_questions_and_answers(txt)
 
-    for qa in questions_answers:
-        print(
-            f"Sentence: '{qa['sentence']}'\nActor: '{qa['actor']}'\nType: '{qa['type']}'\nSubject: '{qa['subject']}'\nSentiment: '{qa['sentiment']}'\n"
-        )
+    # for qa in questions_answers:
+    #     print(
+    #         f"Sentence: '{qa['sentence']}'\nActor: '{qa['actor']}'\nType: '{qa['type']}'\nSubject: '{qa['subject']}'\nSentiment: '{qa['sentiment']}'\n"
+    #     )
 
-    # Open File ✅
+    # Após processar todas as linhas do chat e armazenar em questions_answers:
+    questions_answers_df = pd.DataFrame(questions_answers)
 
-    # Conversation Information
-    # Context/People information
+    # Exemplo de visualização dos primeiros registros
+    print(questions_answers_df)
 
-    # Extrair perguntas ✅
-    # TODO: Check for common question words for more comprehensive question detection
-    # Classificar as perguntas
-    # Extrair as respostas
-    # Classificar as respostas
-    # Desvio
-    # print(info)
-    # Normalizar
+# Open File ✅
+
+# TODO: Conversation Information
+# TODO: Context/People information
+
+# Extrair perguntas ✅
+# Extrair respostas ✅
+# TODO: Check for common question words for more comprehensive question detection
+# TODO: Classificar as perguntas
+# TODO: Extrair as respostas
+# TODO: Classificar as respostas
+# TODO: Capturar Desvios de análise
+# TODO: Normalizar perguntas e respostas
+# TODO: UI
+# TODO : Use Falcon as the LLM
