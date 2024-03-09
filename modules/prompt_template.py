@@ -14,16 +14,20 @@ Read the given context before answering questions and think step by step. If you
 the provided context, inform the user. Do not use any other information for answering user. Provide a detailed answer to the question."""
 
 def get_prompt_template(system_prompt=system_prompt, promptTemplate_type=None, history=False):
+
     if promptTemplate_type == "question":
         B_INST, E_INST = "[INST]", "[/INST]"
         B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
         SYSTEM_PROMPT = B_SYS + system_prompt + E_SYS
-        
+
         instruction = """
+        Context: {context}
         User: {question}"""
 
         prompt_template = B_INST + SYSTEM_PROMPT + instruction + E_INST
-        prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
+        prompt = PromptTemplate(
+            input_variables=["context", "question"], template=prompt_template
+        )
 
     if promptTemplate_type == "llama":
         B_INST, E_INST = "[INST]", "[/INST]"

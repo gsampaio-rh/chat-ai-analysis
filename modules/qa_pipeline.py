@@ -133,4 +133,6 @@ def question_pipeline(
 
     chain = prompt | llm
 
-    return chain.invoke({"question": question})
+    context = ""
+
+    return chain.invoke({"question": question, "context": context})
