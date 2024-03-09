@@ -1,0 +1,5 @@
+re
+spacy
+transformers
+pandas
+streamlit

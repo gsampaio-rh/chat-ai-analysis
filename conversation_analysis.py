@@ -2,12 +2,20 @@ import re
 import spacy
 from transformers import pipeline
 import pandas as pd
+import streamlit as st
 
 distilled_student_sentiment_classifier = pipeline(
     model="lxyuan/distilbert-base-multilingual-cased-sentiments-student",
     return_all_scores=True,
 )
 
+model_path = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
+roberta_sentiment_classifier = pipeline(
+    "sentiment-analysis", model=model_path, tokenizer=model_path
+)
+
+# Load the Portuguese language model
+nlp = spacy.load("pt_core_news_sm")
 
 # List of common interrogative words in Portuguese
 interrogative_words = [
@@ -47,9 +55,6 @@ ignore_tokens = [
     "suas",
 ]
 
-# Load the Portuguese language model
-nlp = spacy.load("pt_core_news_sm")
-
 def read_conversation_file(file_path):
     """Reads content from a specified file path."""
     with open(file_path, "r", encoding="utf-8") as file:
@@ -70,18 +75,20 @@ def extract_actor_and_sentence(line):
     return actor, sentence
 
 def sentiment_analysis(sentence):
-    sentiment_scores = distilled_student_sentiment_classifier(sentence)
+    # DistilBERT analysis
+    distilbert_scores = distilled_student_sentiment_classifier(sentence)[0]
+    distilbert_sentiment_map = {
+        item["label"]: item["score"] for item in distilbert_scores
+    }
+    distilbert_dominant_sentiment = max(
+        distilbert_sentiment_map, key=distilbert_sentiment_map.get
+    )
 
-    # Assumes sentiment_scores is a list of dictionaries like the one provided
-    scores = sentiment_scores[0]  # Unpack the external list
+    # Roberta analysis
+    roberta_scores = roberta_sentiment_classifier(sentence)[0]
+    roberta_dominant_sentiment = roberta_scores["label"]
 
-    # Initializes a dictionary to map each sentiment to its score
-    sentiment_map = {item["label"]: item["score"] for item in scores}
-
-    # Find the sentiment with the highest score
-    dominant_sentiment = max(sentiment_map, key=sentiment_map.get)
-
-    return dominant_sentiment
+    return distilbert_dominant_sentiment, roberta_dominant_sentiment
 
 def extract_subject(sentence, sentence_type):
     """Extracts and returns the most relevant subject from a given sentence, considering if it's a question or a statement."""
@@ -197,7 +204,8 @@ def find_questions_and_answers(txt):
         sentence_type = classify_sentence(sentence_doc)
         subject = extract_subject(sentence_doc, sentence_type)
 
-        sentiment = sentiment_analysis(sentence)
+        # sentiment = sentiment_analysis(sentence)
+        distilbert_result, roberta_result = sentiment_analysis(sentence)
 
         questions_answers.append(
             {
@@ -205,13 +213,47 @@ def find_questions_and_answers(txt):
                 "actor": actor,
                 "type": sentence_type,
                 "subject": subject,
-                "sentiment": sentiment,
+                "sentiment_roberta_result": roberta_result,
+                "sentiment_distilbert_result": distilbert_result,
             }
         )
 
     return questions_answers
 
+def main():
+    file_path = "sample_chat.txt"
+    txt = read_conversation_file(file_path)
+
+    questions_answers = find_questions_and_answers(txt)
+
+    questions_answers_df = pd.DataFrame(questions_answers)
+
+    st.title("Conversation Analysis")
+
+    st.write("Data Visualization:")
+    st.dataframe(questions_answers_df)
+
+    # Sentiment count visualization
+    st.write("Sentiment Counts:")
+    sentiment_counts = questions_answers_df["sentiment"].value_counts()
+    st.bar_chart(sentiment_counts)
+
+    # Additional visualizations and analyses can be added here
+    # For example, filtering based on actor or sentiment
+    actor_filter = st.selectbox(
+        "Select actor:", ["All"] + list(questions_answers_df["actor"].unique())
+    )
+    if actor_filter != "All":
+        filtered_data = questions_answers_df[
+            questions_answers_df["actor"] == actor_filter
+        ]
+        st.dataframe(filtered_data)
+    else:
+        st.dataframe(questions_answers_df)
+
+
 if __name__ == "__main__":
+
     file_path = "sample_chat.txt"
     txt = read_conversation_file(file_path)
 
@@ -228,18 +270,19 @@ if __name__ == "__main__":
     # Exemplo de visualização dos primeiros registros
     print(questions_answers_df)
 
+    # main()
+
 # Open File ✅
-
-# TODO: Conversation Information
-# TODO: Context/People information
-
 # Extrair perguntas ✅
 # Extrair respostas ✅
+# Simple UI ✅
+# TODO: Conversation Information
+# TODO: Context/People information
 # TODO: Check for common question words for more comprehensive question detection
 # TODO: Classificar as perguntas
 # TODO: Extrair as respostas
 # TODO: Classificar as respostas
 # TODO: Capturar Desvios de análise
 # TODO: Normalizar perguntas e respostas
-# TODO: UI
+# TODO: UI - Dashboard
 # TODO : Use Falcon as the LLM
