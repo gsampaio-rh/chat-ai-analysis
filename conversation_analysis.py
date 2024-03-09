@@ -136,34 +136,36 @@ def extract_subject_question(sentence):
     return subject
 
 def extract_subject_statement(sentence):
-    """Extracts and returns the most relevant subject from a given sentence."""
+    """Extracts and returns the most relevant subject from a given sentence, excluding stop words."""
     doc = nlp(sentence)
 
-    # Attempt to use named entities first as they can be more specific
+    # Use named entities first as they can be more specific
     named_entities = [
         ent.text
         for ent in doc.ents
         if ent.label_ in ["PERSON", "NORP", "ORG", "GPE", "LOC"]
     ]
     if named_entities:
-        return ", ".join(
-            named_entities
-        )  # Return named entities as a comma-separated string if available
+        # Return named entities as a comma-separated string if available
+        return ", ".join(named_entities)
 
-    # If no suitable named entities, look for noun chunks that aren't pronouns
+    # Look for noun chunks that aren't pronouns and don't consist solely of stop words
     noun_phrases = [
-        chunk.text for chunk in doc.noun_chunks if chunk.root.pos_ != "PRON"
+        chunk.text
+        for chunk in doc.noun_chunks
+        if chunk.root.pos_ != "PRON" and not all(token.is_stop for token in chunk)
     ]
     if noun_phrases:
-        return ", ".join(
-            noun_phrases
-        )  # Return noun phrases as a comma-separated string
+        # Return noun phrases as a comma-separated string
+        return ", ".join(noun_phrases)
 
-    # As a fallback, identify standalone nouns or proper nouns directly
+    # As a fallback, identify standalone nouns or proper nouns, excluding stop words
     nouns = [
         token.text
         for token in doc
-        if token.pos_ in ["NOUN", "PROPN"] and token.dep_ not in ["attr", "dobj"]
+        if token.pos_ in ["NOUN", "PROPN"]
+        and not token.dep_ in ["attr", "dobj"]
+        and not token.is_stop
     ]
     if nouns:
         return ", ".join(nouns)
